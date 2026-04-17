@@ -1,9 +1,7 @@
 {
-  "/student/exam/[attemptId]/page": "app/student/exam/[attemptId]/page.js",
-  "/student/settings/page": "app/student/settings/page.js",
-  "/admin/questions/page": "app/admin/questions/page.js",
   "/(public)/login/page": "app/(public)/login/page.js",
-  "/student/dashboard/page": "app/student/dashboard/page.js",
+  "/student/exams/page": "app/student/exams/page.js",
+  "/student/settings/page": "app/student/settings/page.js",
   "/admin/questions/[category]/page": "app/admin/questions/[category]/page.js",
-  "/student/exams/page": "app/student/exams/page.js"
+  "/admin/questions/page": "app/admin/questions/page.js"
 }

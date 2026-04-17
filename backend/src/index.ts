@@ -38,8 +38,18 @@ const startServer = async () => {
       res.json({ status: "ok", timestamp: new Date().toISOString() });
     });
     
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
+    });
+
+    server.on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`\n❌ Error: Port ${PORT} is already in use by another process.`);
+        console.error(`💡 Tip: Run 'Stop-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess -Force' in PowerShell to clear it.\n`);
+        process.exit(1);
+      } else {
+        console.error('Server error:', err);
+      }
     });
   } catch (error) {
     console.error("Failed to start server:", error);
