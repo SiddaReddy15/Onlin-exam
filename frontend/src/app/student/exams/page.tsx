@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { studentApi } from "@/services/api";
 import { 
@@ -12,10 +13,18 @@ import { toast } from "sonner";
 
 export default function AvailableExams() {
   const router = useRouter();
+  const [selectedCategory, setSelectedCategory] = React.useState("ALL");
+
   const { data: exams, isLoading } = useQuery({
     queryKey: ["availableExams"],
     queryFn: () => studentApi.getExams().then(res => res.data),
   });
+
+  const categories = exams ? Array.from(new Set(exams.map((e: any) => e.category_name))).filter(Boolean) : [];
+
+  const filteredExams = exams?.filter((exam: any) => 
+    selectedCategory === "ALL" || exam.category_name === selectedCategory
+  );
 
   const startMutation = useMutation({
     mutationFn: (examId: string) => studentApi.startAttempt({ exam_id: examId }),
@@ -30,21 +39,51 @@ export default function AvailableExams() {
 
   return (
     <div className="space-y-12 pb-20">
-      <div>
-        <h1 className="text-4xl font-heading font-black tracking-tight mb-2">Technical Assessments</h1>
-        <p className="text-muted-foreground font-medium italic">Select a challenge below to evaluate your skills.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-heading font-black tracking-tight mb-2">Technical Assessments</h1>
+          <p className="text-muted-foreground font-medium italic">Select a challenge below to evaluate your skills.</p>
+        </div>
+        
+        {categories.length > 0 && (
+          <div className="flex flex-wrap gap-2 p-1.5 bg-white border border-border rounded-[24px] shadow-sm">
+            <button
+              onClick={() => setSelectedCategory("ALL")}
+              className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                selectedCategory === "ALL" 
+                  ? "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/20" 
+                  : "text-muted-foreground hover:bg-slate-50"
+              }`}
+            >
+              All Topics
+            </button>
+            {categories.map((cat: any) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  selectedCategory === cat 
+                    ? "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/20" 
+                    : "text-muted-foreground hover:bg-slate-50"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-8">
         {isLoading ? (
             [1,2,3,4,5,6].map(i => <div key={i} className="h-64 bg-white rounded-[40px] animate-pulse border border-border" />)
-        ) : exams?.length === 0 ? (
+        ) : filteredExams?.length === 0 ? (
             <div className="col-span-full py-32 bg-white rounded-[48px] border-2 border-dashed border-border flex flex-col items-center justify-center text-center">
                 <AlertTriangle size={48} className="text-slate-200 mb-4" />
                 <h3 className="text-xl font-black font-heading mb-2">No active assessments</h3>
                 <p className="text-slate-400 font-bold max-w-xs">Check back later for new technical challenges released by the administrators.</p>
             </div>
-        ) : exams?.map((exam: any, idx: number) => {
+        ) : filteredExams?.map((exam: any, idx: number) => {
             const isCompleted = exam.attempt_status === 'SUBMITTED';
             const isInProgress = exam.attempt_status === 'IN_PROGRESS';
             

@@ -61,74 +61,10 @@ export const createExam = async (req: AuthRequest, res: Response) => {
         await logActivity(req.user.id, "CREATED_EXAM", `Created Exam - ${title}`, "SUCCESS");
     }
 
-    // Seed 3 Random Questions from the Repository or Defaults
-    const existingQuestions = await db.execute({
-        sql: "SELECT * FROM questions WHERE category_id = ? LIMIT 10",
-        args: [category_id]
-    });
-
-    if (existingQuestions.rows.length >= 3) {
-        // Shuffle and pick 3
-        const shuffled = existingQuestions.rows.sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, 3);
-        
-        for (const q of selected) {
-            const newQId = generateId();
-            await db.execute({
-                sql: `INSERT INTO questions (
-                    id, exam_id, category_id, type, title, question_text, options, 
-                    correct_answer, explanation, marks, difficulty, languages, 
-                    starter_code, test_cases
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                args: [
-                    newQId, examId, category_id, q.type, q.title, q.question_text, 
-                    q.options, q.correct_answer, q.explanation, q.marks, 
-                    q.difficulty, q.languages, q.starter_code, q.test_cases
-                ]
-            });
-        }
-    } else {
-        // Create 3 default questions based on the exam title
-        const defaults = [
-            { 
-                type: 'MCQ', 
-                q: `What is the primary purpose of ${title}?`, 
-                options: ['Testing', 'Development', 'Documentation', 'Deployment'], 
-                ans: 'Testing' 
-            },
-            { 
-                type: 'MCQ', 
-                q: `Which of the following is a core concept in ${title}?`, 
-                options: ['Abstraction', 'Compilation', 'Interpretation', 'All of the above'], 
-                ans: 'All of the above' 
-            },
-            { 
-                type: 'CODING', 
-                q: `Implement a basic function named 'diagnostic' that returns the string 'PROCEED' for the context of ${title}.`, 
-                lang: ['javascript', 'python'], 
-                code: "function diagnostic() {\n  return 'PROCEED';\n}" 
-            }
-        ];
-
-        for (const d of defaults) {
-            const newQId = generateId();
-            await db.execute({
-                sql: `INSERT INTO questions (
-                    id, exam_id, category_id, type, question_text, options, 
-                    correct_answer, marks, difficulty, languages, starter_code
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                args: [
-                    newQId, examId, category_id, d.type, d.q, 
-                    d.options ? JSON.stringify(d.options) : null,
-                    d.ans || null, 2, 'MEDIUM', 
-                    d.lang ? JSON.stringify(d.lang) : null,
-                    d.code || null
-                ]
-            });
-        }
-    }
-
-    res.status(201).json({ id: examId, message: "Exam created and seeded with diagnostic questions" });
+    // Autosync: We no longer need to copy questions from the repository to the exam.
+    // The student controller will dynamically pull questions based on the exam's category_id.
+    
+    res.status(201).json({ id: examId, message: "Exam created successfully and synchronized with repository" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
